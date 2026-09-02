@@ -1,5 +1,10 @@
 # clock-tui (`tclock`)
 
+## Syncretic Games Note
+clock-tui is the nerve center of my entire dev practice, but I need to keep it as readable as possible. So I'm adding a few small changes to make it easier to configure in its different modes.
+
+## Upstream README
+
 ![Clock mode with NERV theme and command widgets](./assets/screenshot-clock-widgets.png)
 
 ![Clock mode with Evangelion theme and command widgets](./assets/screenshot-clock-widgets-evangelion.png)
