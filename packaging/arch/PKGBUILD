@@ -1,0 +1,69 @@
+# Source package for a local fork of clock-tui.
+#
+# Builds from this checkout's committed HEAD by default (commit first; the
+# working tree is not used). Set CLOCK_TUI_GIT to build another clone or a
+# remote fork instead:
+#   CLOCK_TUI_GIT=https://github.com/syncreticgames/clock-tui.git makepkg -si
+#
+# Build and install:
+#   cd packaging/arch && makepkg -si
+
+pkgname=clock-tui-git
+_pkgname=clock-tui
+pkgver=0.13.3
+pkgrel=1
+pkgdesc="A terminal clock app with clock, timer, stopwatch, countdown, and clock widgets (local fork)"
+arch=('x86_64' 'aarch64')
+url="https://github.com/syncreticgames/clock-tui"
+license=('MIT')
+depends=('gcc-libs')
+makedepends=('cargo' 'git')
+optdepends=('jq: timer parsing in the tclock-system-health widget'
+            'btrfs-progs: btrfs health row in the tclock-system-health widget')
+provides=("$_pkgname=$pkgver")
+conflicts=("$_pkgname" "$_pkgname-bin")
+
+_repo=${CLOCK_TUI_GIT:-"file://$(cd "${BASH_SOURCE[0]%/*}/../.." && pwd)"}
+source=("$_pkgname::git+$_repo")
+sha256sums=('SKIP')
+
+pkgver() {
+    cd "$_pkgname"
+    local cargo_ver
+    cargo_ver=$(sed -n 's/^version = "\(.*\)"/\1/p' clock-tui/Cargo.toml | head -1)
+    printf '%s.r%s.g%s' "$cargo_ver" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+prepare() {
+    cd "$_pkgname"
+    export RUSTUP_TOOLCHAIN=stable
+    cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+    cd "$_pkgname"
+    export RUSTUP_TOOLCHAIN=stable
+    export CARGO_TARGET_DIR=target
+    cargo build --release --frozen --package clock-tui --bin tclock
+    # Shell completions and the manpage are generated from the clap definition.
+    cargo run --frozen --package xtask
+}
+
+check() {
+    cd "$_pkgname"
+    export RUSTUP_TOOLCHAIN=stable
+    cargo test --frozen --package clock-tui
+}
+
+package() {
+    cd "$_pkgname"
+    install -Dm0755 target/release/tclock                 "$pkgdir/usr/bin/tclock"
+    install -Dm0755 examples/widgets/tclock-system-health "$pkgdir/usr/bin/tclock-system-health"
+    install -Dm0644 assets/gen/tclock.1                   "$pkgdir/usr/share/man/man1/tclock.1"
+    install -Dm0644 assets/gen/tclock.bash                "$pkgdir/usr/share/bash-completion/completions/tclock"
+    install -Dm0644 assets/gen/tclock.fish                "$pkgdir/usr/share/fish/vendor_completions.d/tclock.fish"
+    install -Dm0644 assets/gen/_tclock                    "$pkgdir/usr/share/zsh/site-functions/_tclock"
+    install -Dm0644 README.md                             "$pkgdir/usr/share/doc/$_pkgname/README.md"
+    install -Dm0644 docs/widget-themes.md                 "$pkgdir/usr/share/doc/$_pkgname/widget-themes.md"
+    install -Dm0644 LICENSE                               "$pkgdir/usr/share/licenses/$_pkgname/LICENSE"
+}

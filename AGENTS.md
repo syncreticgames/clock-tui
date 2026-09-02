@@ -18,6 +18,7 @@
 ## Release / packaging
 - `.github/workflows/release.yml` builds `tclock` release tarballs for `x86_64-unknown-linux-gnu` and `aarch64-unknown-linux-gnu`, creates a GitHub Release on `v*` tags, and publishes `clock-tui-bin` to AUR when `AUR_SSH_KEY` is configured.
 - The upstream `clock-tui` AUR source package is maintained by someone else; this fork publishes only `clock-tui-bin`.
+- `packaging/arch/PKGBUILD` is a source package for local installs: `cd packaging/arch && makepkg -si` builds the committed HEAD of this clone (or `$CLOCK_TUI_GIT`), runs the tests, and installs `tclock`, `tclock-system-health`, the manpage, and completions. It carries no Maintainer line on purpose; do not add one.
 - The AUR template lives in `packaging/aur/PKGBUILD-bin`; keep `pkgver` in sync with `clock-tui/Cargo.toml` and leave sha256 values as `SKIP` between releases because the release workflow pins them.
 - `clock-tui/Cargo.toml` has cargo-binstall metadata pointing at GitHub Release tarballs; if artifact names change, update that metadata too.
 
