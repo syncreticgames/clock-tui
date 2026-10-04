@@ -213,7 +213,7 @@ The clock automatically sizes itself into the top area when widgets are configur
 
 Widgets with `position = "bottom"` are placed in a full-width band beneath the widget row instead, stacked in config order and each sized to exactly fit its output. The widget row keeps a minimum height when both are present, and a bottom widget that cannot get at least 3 rows is hidden rather than squeezed. Bottom widgets don't count against the per-row widget limits, so a status strip can coexist with a full row of columns.
 
-When a widget has more output than fits on screen, scroll it with the mouse wheel over that widget. `Home` and `End` jump the active widget to the top or bottom. In clock mode, press `Shift+T` to cycle the configured clock theme; lowercase `t` still switches to Timer mode. Press `g` to cycle widget groups (see [Widget groups](#widget-groups)). Press `z` to toggle a clock-only layout that hides every widget and centers the clock in the full terminal; press `z` again to restore the previous widget/group layout. Hidden widgets do not refresh. Widgets can also contribute key-bound popup actions.
+When a widget has more output than fits on screen, scroll it with the mouse wheel over that widget, or from the keyboard: `PageUp`/`PageDown` scroll by one widget page, `Home` and `End` jump to the top or bottom. Keyboard scrolling acts on the last widget touched by the mouse wheel, or the first visible widget before any mouse interaction. In clock mode, press `Shift+T` to cycle the configured clock theme; lowercase `t` still switches to Timer mode. Press `g` to cycle widget groups (see [Widget groups](#widget-groups)). Press `z` to toggle a clock-only layout that hides every widget and centers the clock in the full terminal; press `z` again to restore the previous widget/group layout. Hidden widgets do not refresh. Widgets can also contribute key-bound popup actions.
 
 Each widget supports:
 
@@ -291,6 +291,22 @@ refresh_secs = 900
 ```
 
 To show a different region, change the location in the `wttr.in` URL — it accepts a city (`wttr.in/Curitiba`), a city with country when the name is ambiguous (`wttr.in/Porto+Alegre,BR`), an airport code (`wttr.in/GRU`), or `~` for a landmark (`wttr.in/~Cristo+Redentor`). Use `+` for spaces and drop accents. The query flags: `0` prints today only (keeping the widget short), `Q` hides the location header, `M` reports wind in m/s. Don't add `T` — it strips the ANSI colors that the widget would otherwise render. Leaving the location out entirely (`wttr.in/?0`) geolocates by IP, which behind a VPN reports the VPN's exit city.
+
+### Bundled example: weather widget
+
+The repo ships a ready-to-use weather widget at [`examples/widgets/tclock-weather`](./examples/widgets/tclock-weather). It fetches current conditions plus an N-day forecast from [Open-Meteo](https://open-meteo.com) (no API key) and renders them as a compact themed block:
+
+```toml
+[clock]
+[[clock.widgets]]
+title = "Weather"
+command = ["tclock-weather", "--city", "Curitiba"]
+refresh_secs = 900
+```
+
+Location comes from `--city NAME` (geocoded) or `--lat`/`--lon`. Use `--units imperial` for °F/mph, `--days N` (1-16) to change the forecast length, and `--current-only` to drop the daily rows. The widget honors `TCLOCK_WIDGET_THEME` (`default`, `evangelion`, `nerv`), so it follows `Shift+T`. It caches API responses for 15 minutes by default; `--no-cache` or `--cache-secs 0` disables that. `--json` prints the normalized data instead of a text block. The script prefers `jq` when installed and falls back to a pure-bash JSON parser, so `jq` is optional.
+
+The raw `wttr.in` command above still works if you prefer no extra script, but the bundled widget is more reliable and testable.
 
 ### Bundled example: system-health widget
 

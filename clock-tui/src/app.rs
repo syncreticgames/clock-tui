@@ -233,8 +233,7 @@ impl DisplayOptions {
 use crate::config::{Config, DisplayConfig, TimerConfig};
 
 const DEFAULT_CLOCK_SIZE: u16 = 1;
-const DEFAULT_TIMER_WORK_MINUTES: i64 = 25;
-const DEFAULT_TIMER_BREAK_MINUTES: i64 = 5;
+const DEFAULT_TIMER_MINUTES: i64 = 5;
 const WIDGET_THEME_ENV: &str = "TCLOCK_WIDGET_THEME";
 
 #[derive(clap::Parser, Default)]
@@ -444,6 +443,8 @@ impl App {
                 KeyCode::Char('z') => w.toggle_widgets(),
                 KeyCode::Home => w.scroll_active_widget_to_top(),
                 KeyCode::End => w.scroll_active_widget_to_bottom(),
+                KeyCode::PageUp => w.scroll_active_widget_by_page(-1),
+                KeyCode::PageDown => w.scroll_active_widget_by_page(1),
                 _ => {}
             }
         } else if let Some(w) = self.timer.as_mut() {
@@ -536,11 +537,10 @@ fn default_mode(config: Option<&Config>) -> Mode {
     }
 }
 
+/// The documented last-resort timer duration: `--duration`, then `[timer]
+/// durations`, then 5m (the README and `--help` promise exactly this chain).
 fn default_timer_config_durations() -> Vec<Duration> {
-    vec![
-        Duration::minutes(DEFAULT_TIMER_WORK_MINUTES),
-        Duration::minutes(DEFAULT_TIMER_BREAK_MINUTES),
-    ]
+    vec![Duration::minutes(DEFAULT_TIMER_MINUTES)]
 }
 
 fn configured_timer_durations(config: &TimerConfig) -> Vec<Duration> {
@@ -750,6 +750,18 @@ mod tests {
             configured_timer_durations(&config),
             default_timer_config_durations()
         );
+    }
+
+    #[test]
+    fn timer_falls_back_to_five_minutes_without_cli_or_config_durations() {
+        // `--help` and the README promise: `--duration`, then `[timer]
+        // durations`, then 5m. An absent `[timer]` section must not smuggle
+        // in a different default.
+        assert_eq!(
+            configured_timer_durations(&TimerConfig::default()),
+            vec![Duration::minutes(5)]
+        );
+        assert_eq!(default_timer_config_durations(), vec![Duration::minutes(5)]);
     }
 
     #[test]
